@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>529 Savings Calculator</title>
+    <link rel="manifest" href="manifest.json">
+    <link rel="stylesheet" href="style.css">
+    <meta name="theme-color" content="#2E86AB">
+    <meta name="description" content="Calculate your 529 college savings plan with S&P 500 projections">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🎓 529 Savings Calculator</h1>
+            <p>Plan for college expenses with S&P 500 investment projections</p>
+        </header>
+
+        <main>
+            <section class="input-section">
+                <h2>Enter Your Details</h2>
+                <form id="calculator-form">
+                    <div class="form-group">
+                        <label for="child-dob">Child's Date of Birth:</label>
+                        <input type="date" id="child-dob" required>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="goal-amount">Target Amount at Age 18:</label>
+                        <div class="input-with-symbol">
+                            <span class="symbol">$</span>
+                            <input type="number" id="goal-amount" value="250000" min="0" step="0.01" required>
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="current-value">Current 529 Balance (optional):</label>
+                        <div class="input-with-symbol">
+                            <span class="symbol">$</span>
+                            <input type="number" id="current-value" value="0" min="0" step="0.01">
+                        </div>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="return-rate">Expected Annual Return:</label>
+                        <select id="return-rate">
+                            <option value="0.07">7% (Conservative)</option>
+                            <option value="0.08" selected>8% (Moderate)</option>
+                            <option value="0.10">10% (Aggressive)</option>
+                        </select>
+                    </div>
+
+                    <button type="submit" class="calculate-btn">Calculate Plan</button>
+                </form>
+            </section>
+
+            <section id="results-section" class="results-section hidden">
+                <h2>Your Savings Plan</h2>
+                <div class="results-grid">
+                    <div class="result-card">
+                        <h3>Monthly Contribution</h3>
+                        <div id="monthly-contribution" class="result-value">-</div>
+                    </div>
+                    <div class="result-card">
+                        <h3>Time Remaining</h3>
+                        <div id="time-remaining" class="result-value">-</div>
+                    </div>
+                    <div class="result-card">
+                        <h3>Total Contributions</h3>
+                        <div id="total-contributions" class="result-value">-</div>
+                    </div>
+                    <div class="result-card">
+                        <h3>Investment Growth</h3>
+                        <div id="investment-growth" class="result-value">-</div>
+                    </div>
+                </div>
+
+                <div class="projection-charts">
+                    <div class="chart-container">
+                        <h3>Growth Over Time</h3>
+                        <canvas id="growth-chart"></canvas>
+                    </div>
+                    <div class="chart-container">
+                        <h3>Contributions vs Growth</h3>
+                        <canvas id="breakdown-chart"></canvas>
+                    </div>
+                </div>
+
+                <div class="actions">
+                    <button id="export-btn" class="secondary-btn">Export to CSV</button>
+                    <button id="save-btn" class="secondary-btn">Save Scenario</button>
+                    <button id="reset-btn" class="secondary-btn">New Calculation</button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            <p><strong>Disclaimer:</strong> This calculator provides estimates based on historical S&P 500 returns. Past performance doesn't guarantee future results. Consult a financial advisor for personalized advice.</p>
+        </footer>
+    </div>
+
+    <!-- Load Chart.js from CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

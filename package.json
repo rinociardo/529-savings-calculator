@@ -1,0 +1,25 @@
+{
+  "name": "529-savings-calculator",
+  "version": "1.0.0",
+  "description": "PWA for 529 college savings planning with S&P 500 projections",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "dev-node": "npx serve .",
+    "dev-php": "php -S localhost:8000"
+  },
+  "keywords": [
+    "529",
+    "savings",
+    "calculator",
+    "pwa",
+    "college",
+    "investment"
+  ],
+  "author": "R. Ciardo",
+  "license": "MIT",
+  "devDependencies": {
+    "chart.js": "^4.4.0"
+  }
+
+}
