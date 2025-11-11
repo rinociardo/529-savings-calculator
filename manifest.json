@@ -2,17 +2,12 @@
     "name": "529 Savings Calculator",
     "short_name": "529 Calculator",
     "description": "Plan your college savings with S&P 500 projections",
-    "start_url": "/",
+    "start_url": "/529-savings-calculator/",
     "display": "standalone",
     "theme_color": "#2E86AB",
     "background_color": "#ffffff",
     "icons": [
-        {
-            "src": "icons/icon-192.png",
-            "sizes": "192x192",
-            "type": "image/png",
-            "purpose": "any maskable"
-        },
+
         {
             "src": "icons/icon-512.png",
             "sizes": "512x512",
