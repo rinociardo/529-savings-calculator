@@ -1,14 +1,16 @@
-// 529 Savings Calculator Main Application
+// 529 Savings Calculator with Yahoo Finance API and Local Storage
 class SavingsCalculator {
     constructor() {
         this.charts = {};
+        this.etfPrice = null;
+        this.priceFetchAttempted = false;
         this.init();
     }
 
     init() {
         this.setupEventListeners();
+        this.loadSavedData();
         this.setDefaultDate();
-        this.loadSavedScenarios();
     }
 
     setupEventListeners() {
@@ -26,20 +28,113 @@ class SavingsCalculator {
         });
 
         document.getElementById('save-btn').addEventListener('click', () => {
-            this.saveScenario();
+            this.saveData();
+        });
+
+        // Auto-save when inputs change
+        ['child-dob', 'goal-amount', 'etf-shares', 'etf-ticker', 'return-rate'].forEach(id => {
+            document.getElementById(id).addEventListener('change', () => {
+                this.saveData();
+            });
+        });
+
+        // Fetch price when ticker changes or on first load
+        document.getElementById('etf-ticker').addEventListener('change', () => {
+            this.fetchETFPrice();
         });
     }
 
     setDefaultDate() {
-        // Set default date to August 13, 2024
-        document.getElementById('child-dob').value = '2024-08-13';
+        // Only set default if no saved data
+        if (!localStorage.getItem('529-portfolio')) {
+            document.getElementById('child-dob').value = '2024-08-13';
+        }
+    }
+    async fetchETFPrice() {
+        if (this.priceFetchAttempted) return;
+        
+        const ticker = document.getElementById('etf-ticker').value;
+        const display = document.getElementById('current-value-display');
+        
+        display.classList.remove('hidden');
+        display.classList.add('updating');
+        this.priceFetchAttempted = true;
+
+        // Show immediate fallback while trying to fetch
+        this.etfPrice = this.getFallbackPrice(ticker);
+        this.updateCurrentValueDisplay();
+        this.displayPriceSource('Trying to fetch live price...');
+
+        try {
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
+            
+            const response = await fetch(
+                `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`,
+                { signal: controller.signal }
+            );
+            clearTimeout(timeoutId);
+            
+            if (response.ok) {
+                const data = await response.json();
+                const livePrice = data.chart?.result?.[0]?.meta?.regularMarketPrice;
+                if (livePrice) {
+                    this.etfPrice = livePrice;
+                    this.updateCurrentValueDisplay();
+                    this.displayPriceSource(`Live price: ${new Date().toLocaleTimeString()}`);
+                }
+            }
+        } catch (error) {
+            console.log('Price fetch failed, using fallback:', error);
+            this.displayPriceSource('Using approximate price (check connection)');
+        }
+        
+        display.classList.remove('updating');
+        this.saveData();
+    }
+
+    getFallbackPrice(ticker) {
+        // Fallback prices (update these periodically)
+        const fallbackPrices = {
+            'SPY': 450,
+            'VOO': 420,
+            'IVV': 480
+        };
+        return fallbackPrices[ticker] || 450;
+    }
+
+    updateCurrentValueDisplay() {
+        const shares = parseFloat(document.getElementById('etf-shares').value) || 0;
+        
+        if (this.etfPrice && shares > 0) {
+            const currentValue = shares * this.etfPrice;
+            const ticker = document.getElementById('etf-ticker').value;
+            
+            document.getElementById('current-portfolio-value').innerHTML = 
+                `Current Value: <strong>${this.formatCurrency(currentValue)}</strong>`;
+            
+            this.displayPriceSource(
+                `${shares} shares of ${ticker} @ ${this.formatCurrency(this.etfPrice)}`
+            );
+            
+            document.getElementById('current-value-display').classList.remove('hidden');
+        }
+    }
+
+    displayPriceSource(message) {
+        document.getElementById('price-source').textContent = message;
+    }
+
+    getCurrentPortfolioValue() {
+        const shares = parseFloat(document.getElementById('etf-shares').value) || 0;
+        return shares * (this.etfPrice || this.getFallbackPrice(document.getElementById('etf-ticker').value));
     }
 
     calculate() {
         // Get input values
         const childDOB = document.getElementById('child-dob').value;
         const goalAmount = parseFloat(document.getElementById('goal-amount').value);
-        const currentValue = parseFloat(document.getElementById('current-value').value) || 0;
+        const currentValue = this.getCurrentPortfolioValue();
         const annualReturn = parseFloat(document.getElementById('return-rate').value);
 
         // Validate inputs
@@ -73,6 +168,9 @@ class SavingsCalculator {
 
         // Show results section
         document.getElementById('results-section').classList.remove('hidden');
+
+        // Auto-save after calculation
+        this.saveData();
     }
 
     validateInputs(childDOB, goalAmount) {
@@ -156,31 +254,17 @@ class SavingsCalculator {
     }
 
     displayResults(monthlyContribution, years, months, totalMonths, goalAmount) {
-        // Smart currency formatting - show cents for smaller amounts, whole dollars for larger
-        const formatCurrency = (amount) => {
-            if (amount >= 1000) {
-                // For larger amounts, round to whole dollars
-                return new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 0,
-                    maximumFractionDigits: 0
-                }).format(Math.round(amount));
-            } else {
-                // For smaller amounts, show cents
-                return new Intl.NumberFormat('en-US', {
-                    style: 'currency',
-                    currency: 'USD',
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2
-                }).format(amount);
-            }
-        };
+        const formatter = new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        });
 
-        document.getElementById('monthly-contribution').textContent = formatCurrency(monthlyContribution);
+        document.getElementById('monthly-contribution').textContent = formatter.format(monthlyContribution);
         document.getElementById('time-remaining').textContent = `${years} years, ${months} months`;
-        document.getElementById('total-contributions').textContent = formatCurrency(monthlyContribution * totalMonths);
-        document.getElementById('investment-growth').textContent = formatCurrency(goalAmount - (monthlyContribution * totalMonths));
+        document.getElementById('total-contributions').textContent = formatter.format(monthlyContribution * totalMonths);
+        document.getElementById('investment-growth').textContent = formatter.format(goalAmount - (monthlyContribution * totalMonths));
     }
 
     createCharts(projection, goalAmount) {
@@ -265,25 +349,89 @@ class SavingsCalculator {
         this.charts = {};
     }
 
+    saveData() {
+        const data = {
+            // User inputs
+            childDOB: document.getElementById('child-dob').value,
+            goalAmount: document.getElementById('goal-amount').value,
+            returnRate: document.getElementById('return-rate').value,
+            
+            // ETF data
+            etfShares: document.getElementById('etf-shares').value,
+            etfTicker: document.getElementById('etf-ticker').value,
+            etfPrice: this.etfPrice,
+            
+            // Metadata
+            lastUpdated: new Date().toISOString(),
+            priceFetchAttempted: this.priceFetchAttempted
+        };
+        
+        localStorage.setItem('529-portfolio', JSON.stringify(data));
+        console.log('Portfolio data saved');
+    }
+
+    loadSavedData() {
+        const saved = localStorage.getItem('529-portfolio');
+        if (saved) {
+            try {
+                const data = JSON.parse(saved);
+                
+                // Load user inputs
+                if (data.childDOB) document.getElementById('child-dob').value = data.childDOB;
+                if (data.goalAmount) document.getElementById('goal-amount').value = data.goalAmount;
+                if (data.returnRate) document.getElementById('return-rate').value = data.returnRate;
+                
+                // Load ETF data
+                if (data.etfShares) document.getElementById('etf-shares').value = data.etfShares;
+                if (data.etfTicker) document.getElementById('etf-ticker').value = data.etfTicker;
+                if (data.etfPrice) this.etfPrice = data.etfPrice;
+                
+                // Load session state
+                this.priceFetchAttempted = data.priceFetchAttempted || false;
+                
+                console.log('Loaded saved portfolio data from:', data.lastUpdated);
+                
+                // Update display with loaded data
+                this.updateCurrentValueDisplay();
+                
+                // Fetch price if we haven't attempted it this session
+                if (!this.priceFetchAttempted) {
+                    setTimeout(() => this.fetchETFPrice(), 1000);
+                }
+                
+            } catch (error) {
+                console.error('Error loading saved data:', error);
+            }
+        } else {
+            // No saved data - fetch price for default ticker
+            setTimeout(() => this.fetchETFPrice(), 1000);
+        }
+    }
+
     resetCalculator() {
-        document.getElementById('calculator-form').reset();
-        this.setDefaultDate();
-        document.getElementById('results-section').classList.add('hidden');
-        this.destroyCharts();
+        if (confirm('Reset all data? This will clear your saved inputs.')) {
+            localStorage.removeItem('529-portfolio');
+            document.getElementById('calculator-form').reset();
+            this.setDefaultDate();
+            document.getElementById('results-section').classList.add('hidden');
+            this.destroyCharts();
+            this.priceFetchAttempted = false;
+            this.etfPrice = null;
+            document.getElementById('current-value-display').classList.add('hidden');
+        }
     }
 
     exportToCSV() {
         alert('CSV export feature would be implemented here');
-        // Implementation for CSV export
     }
 
-    saveScenario() {
-        alert('Scenario save feature would be implemented here');
-        // Implementation for saving scenarios to localStorage
-    }
-
-    loadSavedScenarios() {
-        // Implementation for loading saved scenarios
+    formatCurrency(amount) {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            minimumFractionDigits: 0,
+            maximumFractionDigits: 0
+        }).format(amount);
     }
 }
 
@@ -302,5 +450,5 @@ if ('serviceWorker' in navigator) {
 
 // Initialize the application when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
-    new SavingsCalculator();
+    window.calculator = new SavingsCalculator();
 });
