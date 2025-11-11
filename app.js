@@ -96,6 +96,7 @@ class SavingsCalculator {
     getFallbackPrice(ticker) {
         // Fallback prices (update these periodically)
         const fallbackPrices = {
+            'FXAIX': 237.53,
             'SPY': 450,
             'VOO': 420,
             'IVV': 480
