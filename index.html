@@ -49,10 +49,33 @@
                         <small class="help-text">We'll fetch the current price automatically</small>
                     </div>
 
-                    <div id="current-value-display" class="value-display hidden">
-                        <strong id="current-portfolio-value">-</strong>
-                        <br><small id="price-source">-</small>
+                    <div class="form-group">
+                        <label for="custom-price">Custom Price per Share (optional):</label>
+                        <div class="input-with-symbol">
+                            <span class="symbol">$</span>
+                            <input type="number" id="custom-price" step="0.01" placeholder="Override auto price">
+                        </div>
                     </div>
+
+                    <div id="current-value-display" class="value-display hidden">
+                        <div class="portfolio-summary">
+                            <div class="portfolio-row">
+                                <span class="label">Shares:</span>
+                                <span id="display-shares" class="value">-</span>
+                            </div>
+                            <div class="portfolio-row">
+                                <span class="label">Price per share:</span>
+                                <span id="display-price" class="value">-</span>
+                            </div>
+                            <div class="portfolio-row total">
+                                <span class="label">Current Portfolio Value:</span>
+                                <span id="display-total-value" class="value">-</span>
+                            </div>
+                        </div>
+                        <div class="price-source">
+                            <small id="price-source">-</small>
+                        </div>
+                    </div>  
                     
                     <div class="form-group">
                         <label for="return-rate">Expected Annual Return:</label>

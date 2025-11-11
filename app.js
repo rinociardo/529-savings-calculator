@@ -42,6 +42,22 @@ class SavingsCalculator {
         document.getElementById('etf-ticker').addEventListener('change', () => {
             this.fetchETFPrice();
         });
+
+        // Add this to your setupEventListeners method:
+        document.getElementById('etf-shares').addEventListener('input', () => {
+            this.updateCurrentValueDisplay();
+            this.saveData();
+        });
+        document.getElementById('custom-price').addEventListener('input', () => {
+            const customPrice = parseFloat(document.getElementById('custom-price').value);
+            if (customPrice > 0) {
+                this.etfPrice = customPrice;
+                this.updateCurrentValueDisplay();
+                this.displayPriceSource('Using custom price');
+                this.saveData();
+            }
+        });
+
     }
 
     setDefaultDate() {
@@ -57,42 +73,15 @@ class SavingsCalculator {
         const display = document.getElementById('current-value-display');
         
         display.classList.remove('hidden');
-        display.classList.add('updating');
         this.priceFetchAttempted = true;
 
         // Show immediate fallback while trying to fetch
         this.etfPrice = this.getFallbackPrice(ticker);
         this.updateCurrentValueDisplay();
-        this.displayPriceSource('Trying to fetch live price...');
+        this.displayPriceSource('Using approximate price - edit if needed');
 
-        try {
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3000); // 3 second timeout
-            
-            const response = await fetch(
-                `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}`,
-                { signal: controller.signal }
-            );
-            clearTimeout(timeoutId);
-            
-            if (response.ok) {
-                const data = await response.json();
-                const livePrice = data.chart?.result?.[0]?.meta?.regularMarketPrice;
-                if (livePrice) {
-                    this.etfPrice = livePrice;
-                    this.updateCurrentValueDisplay();
-                    this.displayPriceSource(`Live price: ${new Date().toLocaleTimeString()}`);
-                }
-            }
-        } catch (error) {
-            console.log('Price fetch failed, using fallback:', error);
-            this.displayPriceSource('Using approximate price (check connection)');
-        }
-        
-        display.classList.remove('updating');
         this.saveData();
     }
-
     getFallbackPrice(ticker) {
         // Fallback prices (update these periodically)
         const fallbackPrices = {
@@ -106,22 +95,35 @@ class SavingsCalculator {
 
     updateCurrentValueDisplay() {
         const shares = parseFloat(document.getElementById('etf-shares').value) || 0;
+        const ticker = document.getElementById('etf-ticker').value;
         
-        if (this.etfPrice && shares > 0) {
+        if (this.etfPrice !== null) {
             const currentValue = shares * this.etfPrice;
-            const ticker = document.getElementById('etf-ticker').value;
             
-            document.getElementById('current-portfolio-value').innerHTML = 
-                `Current Value: <strong>${this.formatCurrency(currentValue)}</strong>`;
-            
-            this.displayPriceSource(
-                `${shares} shares of ${ticker} @ ${this.formatCurrency(this.etfPrice)}`
-            );
+            // Update the detailed display
+            document.getElementById('display-shares').textContent = shares.toFixed(3);
+            document.getElementById('display-price').textContent = this.formatCurrency(this.etfPrice);
+            document.getElementById('display-total-value').textContent = this.formatCurrency(currentValue);
             
             document.getElementById('current-value-display').classList.remove('hidden');
+            
+            // Show what's being used in calculations
+            this.updateCalculationSummary(currentValue);
         }
     }
 
+    updateCalculationSummary(currentValue) {
+        // This will show the user exactly what value is being used in calculations
+        const summaryElement = document.getElementById('price-source');
+        if (currentValue > 0) {
+            summaryElement.innerHTML = `
+                Using <strong>${this.formatCurrency(currentValue)}</strong> in calculations<br>
+                <em>Based on ${parseFloat(document.getElementById('etf-shares').value).toFixed(3)} shares × ${this.formatCurrency(this.etfPrice)}/share</em>
+            `;
+        } else {
+            summaryElement.textContent = 'Enter share count to see portfolio value';
+        }
+    }
     displayPriceSource(message) {
         document.getElementById('price-source').textContent = message;
     }

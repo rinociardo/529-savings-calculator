@@ -277,3 +277,49 @@ footer {
 .hidden {
     display: none !important;
 }
+.portfolio-summary {
+    margin-bottom: 0.5rem;
+}
+
+.portfolio-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.25rem 0;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.portfolio-row.total {
+    border-bottom: none;
+    border-top: 2px solid rgba(0,0,0,0.2);
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    font-weight: bold;
+    background: rgba(255,255,255,0.5);
+    margin-left: -0.75rem;
+    margin-right: -0.75rem;
+    padding-left: 0.75rem;
+    padding-right: 0.75rem;
+}
+
+.portfolio-row .label {
+    color: #666;
+    font-size: 0.9rem;
+}
+
+.portfolio-row .value {
+    font-weight: 600;
+    color: #2E86AB;
+}
+
+.portfolio-row.total .value {
+    color: #1E5A7A;
+    font-size: 1.1rem;
+}
+
+.price-source {
+    text-align: center;
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed #ccc;
+}
