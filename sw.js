@@ -1,11 +1,11 @@
 const CACHE_NAME = '529-calculator-v1.0.3';
 const urlsToCache = [
-  '/529-savings-calculator/',
-  '/529-savings-calculator/index.html',
-  '/529-savings-calculator/style.css',
-  '/529-savings-calculator/app.js',
-  '/529-savings-calculator/manifest.json',
-  '/529-savings-calculator/icons/icon-512.png'
+  './',
+  './index.html',
+  './style.css',
+  './app.js', 
+  './manifest.json',
+  './icons/icon-512.png'
 ];
 
 // Install event - cache essential files
